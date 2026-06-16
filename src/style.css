@@ -68,7 +68,7 @@ html, body {
 }
 
 /* Make UI elements interactable */
-.top-bar, .bottom-bar, .modal, .center-ui {
+.top-bar, .bottom-bar, .modal {
   pointer-events: auto;
 }
 
