@@ -37,18 +37,15 @@ const LEVELS = Array.from({length: 40}).map((_, i) => ({
 
 
 
-const girlImages = [
-  'girl_swimsuit_1_1781622182455.png',
-  'girl_swimsuit_2_1781622195544.png',
-  'girl_swimsuit_3_1781622209149.png',
-  'girl_swimsuit_4_1781622230765.png',
-  'girl_swimsuit_5_1781622242542.png'
-];
-const GIRL_LEVELS = Array.from({length: 40}).map((_, i) => ({
+
+
+const GIRL_LEVELS = Array.from({length: 50}).map((_, i) => ({
   name: `Girl ${i+1}`,
-  texture: `${import.meta.env.BASE_URL}textures/girls/${girlImages[i % 5]}`,
+  texture: `${import.meta.env.BASE_URL}textures/girls/girl_swimsuit_${i+1}.png`,
   maskColor: '#FFC0CB'
 }));
+
+
 
 const BRUSH_BASE_SIZE = 15;
 const BRUSH_UPGRADE_AMOUNT = 5;
@@ -264,22 +261,53 @@ function initLevel() {
   const currentIndex = isGirlMode ? state.girlLevelIndex : state.levelIndex;
   const currentLevel = levelArray[currentIndex % levelArray.length];
 
-  textureLayer.style.backgroundImage = `url(${currentLevel.texture})`;
-  levelDisplay.textContent = `Level ${currentIndex + 1} (${currentLevel.name})`;
+  
+  levelDisplay.textContent = `Level ${currentIndex + 1}`;
   
   ctx.globalCompositeOperation = 'source-over';
-  const gradient = ctx.createLinearGradient(0, 0, window.innerWidth, window.innerHeight);
-  gradient.addColorStop(0, currentLevel.maskColor);
-  gradient.addColorStop(1, '#000000');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   
-  // Dirt pattern
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  for(let i=0; i<1000; i++) {
-    ctx.beginPath();
-    ctx.arc(Math.random()*window.innerWidth, Math.random()*window.innerHeight, Math.random()*5, 0, Math.PI*2);
-    ctx.fill();
+  if (state.gameMode === 'girl') {
+    // Holographic background in CSS
+    textureLayer.style.background = 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)';
+    textureLayer.style.backgroundImage = 'none';
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = currentLevel.texture;
+    img.onload = () => {
+      // Draw image stretched or contained
+      // We will fill the canvas with the image
+      const scale = Math.max(window.innerWidth / img.width, window.innerHeight / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (window.innerWidth - w) / 2;
+      const y = (window.innerHeight - h) / 2;
+      
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(img, x, y, w, h);
+      
+      ctx.globalCompositeOperation = 'destination-out';
+      clearedPixels = 0;
+      updateProgress(0);
+      totalPixels = offscreenCanvas.width * offscreenCanvas.height;
+    };
+  } else {
+    textureLayer.style.background = 'none';
+    textureLayer.style.backgroundImage = `url(${currentLevel.texture})`;
+    
+    const gradient = ctx.createLinearGradient(0, 0, window.innerWidth, window.innerHeight);
+    gradient.addColorStop(0, currentLevel.maskColor);
+    gradient.addColorStop(1, '#000000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    
+    // Dirt pattern
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    for(let i=0; i<1000; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random()*window.innerWidth, Math.random()*window.innerHeight, Math.random()*5, 0, Math.PI*2);
+      ctx.fill();
+    }
   }
 
   isDalgonaMode = !isGirlMode && state.levelIndex >= 19;
@@ -350,11 +378,11 @@ function scratch(x: number, y: number) {
 
   createParticle(x, y);
 
-  const earnAmount = (MULTIPLIER_BASE + (state.multiplierLevel - 1) * MULTIPLIER_UPGRADE_AMOUNT) * combo;
+  const earnAmount = ((MULTIPLIER_BASE + (state.multiplierLevel - 1) * MULTIPLIER_UPGRADE_AMOUNT) * combo) / 100;
   state.coins += earnAmount;
   
   if (state.luckLevel > 0 && Math.random() < (0.002 * state.luckLevel)) {
-    const gemBonus = 500 * state.luckLevel;
+    const gemBonus = (500 * state.luckLevel) / 100;
     state.coins += gemBonus;
     particles.push({
       x, y, vx: 0, vy: -2, life: 1.0, color: '#ff00ff', text: '💎 +' + gemBonus
