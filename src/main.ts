@@ -255,100 +255,65 @@ function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, he
 }
 
 function initLevel() {
-  
   const isGirlMode = state.gameMode === 'girl';
   const levelArray = isGirlMode ? GIRL_LEVELS : LEVELS;
   const currentIndex = isGirlMode ? state.girlLevelIndex : state.levelIndex;
   const currentLevel = levelArray[currentIndex % levelArray.length];
-
   
+  isDalgonaMode = !isGirlMode && state.levelIndex >= 19;
   levelDisplay.textContent = `Level ${currentIndex + 1}`;
+  
+  const nextIndex = currentIndex + 1;
+  const nextLevel = levelArray[nextIndex % levelArray.length];
+  
+  textureLayer.style.background = 'none';
+  textureLayer.style.backgroundImage = `url(${nextLevel.texture})`;
+  textureLayer.style.backgroundSize = 'cover';
+  textureLayer.style.backgroundPosition = 'center top';
   
   ctx.globalCompositeOperation = 'source-over';
   
-  if (state.gameMode === 'girl') {
-    const nextIndex = currentIndex + 1;
-    const nextLevel = levelArray[nextIndex % levelArray.length];
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = currentLevel.texture;
+  img.onload = () => {
+    const scale = Math.max(window.innerWidth / img.width, window.innerHeight / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = (window.innerWidth - w) / 2;
+    const y = 0;
     
-    textureLayer.style.background = 'none';
-    textureLayer.style.backgroundImage = `url(${nextLevel.texture})`;
-    textureLayer.style.backgroundSize = 'cover';
-    textureLayer.style.backgroundPosition = 'center top';
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(img, x, y, w, h);
     
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = currentLevel.texture;
-    img.onload = () => {
-      // Draw image stretched or contained
-      // We will fill the canvas with the image
-      const scale = Math.max(window.innerWidth / img.width, window.innerHeight / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      const x = (window.innerWidth - w) / 2;
-      const y = 0;
+    if (isDalgonaMode) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.setLineDash([10, 10]);
+      drawDalgonaShape(ctx, window.innerWidth, window.innerHeight, 4, false);
+      ctx.setLineDash([]);
       
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(img, x, y, w, h);
+      targetCanvas.width = 100;
+      targetCanvas.height = 100;
+      errorCanvas.width = 100;
+      errorCanvas.height = 100;
       
-      ctx.globalCompositeOperation = 'destination-out';
-      clearedPixels = 0;
-      updateProgress(0);
+      const difficultyThickness = Math.max(5, 20 - (state.levelIndex - 19) * 2);
+      
+      drawDalgonaShape(targetCtx, 100, 100, 4, false);
+      drawDalgonaShape(errorCtx, 100, 100, difficultyThickness, true);
+      
+      const targetData = targetCtx.getImageData(0,0,100,100).data;
+      let targetPx = 0;
+      for(let i=3; i<targetData.length; i+=4) if(targetData[i] > 100) targetPx++;
+      totalPixels = targetPx || 1;
+    } else {
       totalPixels = offscreenCanvas.width * offscreenCanvas.height;
-    };
-  } else {
-    textureLayer.style.background = 'none';
-    textureLayer.style.backgroundImage = `url(${currentLevel.texture})`;
-    
-    const gradient = ctx.createLinearGradient(0, 0, window.innerWidth, window.innerHeight);
-    gradient.addColorStop(0, currentLevel.maskColor);
-    gradient.addColorStop(1, '#000000');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-    
-    // Dirt pattern
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    for(let i=0; i<1000; i++) {
-      ctx.beginPath();
-      ctx.arc(Math.random()*window.innerWidth, Math.random()*window.innerHeight, Math.random()*5, 0, Math.PI*2);
-      ctx.fill();
     }
-  }
-
-  isDalgonaMode = !isGirlMode && state.levelIndex >= 19;
-  
-  if (isDalgonaMode) {
-    // Draw Dalgona outline guide on the main canvas so user can see it
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.setLineDash([10, 10]);
-    drawDalgonaShape(ctx, window.innerWidth, window.innerHeight, 4, false);
-    ctx.setLineDash([]);
     
-    // Setup Dalgona checks in 100x100 resolution
-    targetCanvas.width = 100;
-    targetCanvas.height = 100;
-    errorCanvas.width = 100;
-    errorCanvas.height = 100;
-    
-    // Safe zone is thinner as level increases!
-    const difficultyThickness = Math.max(5, 20 - (state.levelIndex - 19) * 2);
-    
-    // Target is exactly the line
-    drawDalgonaShape(targetCtx, 100, 100, 4, false);
-    // Error is everything outside the safe zone
-    drawDalgonaShape(errorCtx, 100, 100, difficultyThickness, true);
-    
-    // Calculate total pixels of the target line
-    const targetData = targetCtx.getImageData(0,0,100,100).data;
-    let targetPx = 0;
-    for(let i=3; i<targetData.length; i+=4) if(targetData[i] > 100) targetPx++;
-    totalPixels = targetPx || 1;
-  } else {
-    totalPixels = offscreenCanvas.width * offscreenCanvas.height;
-  }
-
-  ctx.globalCompositeOperation = 'destination-out';
-  clearedPixels = 0;
-  updateProgress(0);
+    ctx.globalCompositeOperation = 'destination-out';
+    clearedPixels = 0;
+    updateProgress(0);
+  };
 }
 
 function getBrushSettings() {
