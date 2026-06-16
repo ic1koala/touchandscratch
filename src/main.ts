@@ -36,16 +36,19 @@ const LEVELS = Array.from({length: 40}).map((_, i) => ({
 }));
 
 
+
+const girlImages = [
+  'girl_swimsuit_1_1781622182455.png',
+  'girl_swimsuit_2_1781622195544.png',
+  'girl_swimsuit_3_1781622209149.png',
+  'girl_swimsuit_4_1781622230765.png',
+  'girl_swimsuit_5_1781622242542.png'
+];
 const GIRL_LEVELS = Array.from({length: 40}).map((_, i) => ({
   name: `Girl ${i+1}`,
-  // Using Unsplash source with keywords 'woman,portrait' as dummy.
-  texture: `https://images.unsplash.com/photo-${1500000000000 + i}?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=600&w=800&ixid=MnwxfDB8MXxyYW5kb218MHx8d29tYW4scG9ydHJhaXR8fHx8fHwxNjgxMTExMTEx&ixlib=rb-4.0.3&q=80`, // Note: Real random API would be better, but we'll use a placeholder structure. Actually, source.unsplash is deprecated. Let's use a reliable random seed image.
-  maskColor: '#FFC0CB' // Pink mask
+  texture: `${import.meta.env.BASE_URL}textures/girls/${girlImages[i % 5]}`,
+  maskColor: '#FFC0CB'
 }));
-// Better reliable image generator for now:
-for(let i=0; i<40; i++) {
-  GIRL_LEVELS[i].texture = `https://picsum.photos/seed/girl${i}/800/600`; // Placeholder
-}
 
 const BRUSH_BASE_SIZE = 15;
 const BRUSH_UPGRADE_AMOUNT = 5;
