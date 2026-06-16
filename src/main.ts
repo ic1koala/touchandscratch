@@ -201,15 +201,14 @@ const errorCtx = errorCanvas.getContext('2d')!;
 
 let isDalgonaMode = false;
 // let // // removed
-const DALGONA_ERROR_LIMIT = 5; // 5% error limit
+// let isDalgonaMode = false; // removed
 
-function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, height: number, lineWidth: number, isErrorMask: boolean) {
+function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, height: number, mode: 'guide' | 'target' | 'error') {
   const cx = width / 2;
   const cy = height / 2;
   const size = Math.min(width, height) * 0.3;
   
   ctxToDraw.beginPath();
-  // Shape changes based on level
   const shapeType = state.levelIndex % 4;
   
   if (shapeType === 0) { // Circle
@@ -226,31 +225,34 @@ function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, he
     }
     ctxToDraw.closePath();
   } else { // Umbrella (approximate)
-    ctxToDraw.arc(cx, cy, size, Math.PI, 0);
-    ctxToDraw.lineTo(cx - size, cy);
-    ctxToDraw.lineTo(cx, cy + size * 1.2);
-    ctxToDraw.lineTo(cx + size, cy);
-    ctxToDraw.closePath();
+    ctxToDraw.arc(cx, cy, size, Math.PI, 0); // Ends at right side
+    ctxToDraw.lineTo(cx, cy + size * 1.2); // Bottom tip
+    ctxToDraw.closePath(); // Back to left side
   }
 
-  if (isErrorMask) {
-    // Fill the ENTIRE canvas with red
-    ctxToDraw.fillStyle = 'red';
+  if (mode === 'guide') {
+    ctxToDraw.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctxToDraw.setLineDash([10, 10]);
+    ctxToDraw.lineWidth = 4;
+    ctxToDraw.stroke();
+    ctxToDraw.setLineDash([]);
+  } else if (mode === 'target') {
+    // Target is OUTSIDE
+    ctxToDraw.fillStyle = 'white';
     ctxToDraw.fillRect(0, 0, width, height);
-    // Erase the safe zone
     ctxToDraw.globalCompositeOperation = 'destination-out';
-    ctxToDraw.lineWidth = lineWidth;
-    ctxToDraw.lineCap = 'round';
-    ctxToDraw.lineJoin = 'round';
+    ctxToDraw.fill();
+    ctxToDraw.lineWidth = 10;
     ctxToDraw.stroke();
     ctxToDraw.globalCompositeOperation = 'source-over';
-  } else {
-    // Just draw the line
-    ctxToDraw.strokeStyle = 'white';
-    ctxToDraw.lineWidth = lineWidth;
-    ctxToDraw.lineCap = 'round';
-    ctxToDraw.lineJoin = 'round';
+  } else if (mode === 'error') {
+    // Error is INSIDE
+    ctxToDraw.fillStyle = 'red';
+    ctxToDraw.fill();
+    ctxToDraw.globalCompositeOperation = 'destination-out';
+    ctxToDraw.lineWidth = 10;
     ctxToDraw.stroke();
+    ctxToDraw.globalCompositeOperation = 'source-over';
   }
 }
 
@@ -287,20 +289,15 @@ function initLevel() {
     ctx.drawImage(img, x, y, w, h);
     
     if (isDalgonaMode) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.setLineDash([10, 10]);
-      drawDalgonaShape(ctx, window.innerWidth, window.innerHeight, 4, false);
-      ctx.setLineDash([]);
+      drawDalgonaShape(ctx, window.innerWidth, window.innerHeight, 'guide');
       
       targetCanvas.width = 100;
       targetCanvas.height = 100;
       errorCanvas.width = 100;
       errorCanvas.height = 100;
       
-      const difficultyThickness = Math.max(5, 20 - (state.levelIndex - 19) * 2);
-      
-      drawDalgonaShape(targetCtx, 100, 100, 4, false);
-      drawDalgonaShape(errorCtx, 100, 100, difficultyThickness, true);
+      drawDalgonaShape(targetCtx, 100, 100, 'target');
+      drawDalgonaShape(errorCtx, 100, 100, 'error');
       
       const targetData = targetCtx.getImageData(0,0,100,100).data;
       let targetPx = 0;
@@ -382,6 +379,11 @@ function calcProgress() {
     
     let clearedTarget = 0;
     let errorPx = 0;
+    let totalErrorPx = 0;
+    
+    for (let i = 3; i < errorData.length; i += 4) {
+      if (errorData[i] > 100) totalErrorPx++;
+    }
     
     for (let i = 3; i < data.length; i += 4) {
       if (data[i] < 50) { // Screen is erased here
@@ -390,8 +392,8 @@ function calcProgress() {
       }
     }
     
-    const errPct = (errorPx / 10000) * 100;
-    if (errPct > DALGONA_ERROR_LIMIT) {
+    const errPct = (errorPx / (totalErrorPx || 1)) * 100;
+    if (errPct >= 5) {
       dalgonaFail();
       return;
     }
