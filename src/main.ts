@@ -18,9 +18,9 @@ const defaultState: GameState = {
 let state: GameState = { ...defaultState };
 
 const LEVELS = [
-  { name: 'Wood', texture: '/textures/wood.png', maskColor: '#8B4513' },
-  { name: 'Stone', texture: '/textures/stone.png', maskColor: '#555555' },
-  { name: 'Water', texture: '/textures/water.png', maskColor: '#20B2AA' },
+  { name: 'Wood', texture: `${import.meta.env.BASE_URL}textures/wood.png`, maskColor: '#8B4513' },
+  { name: 'Stone', texture: `${import.meta.env.BASE_URL}textures/stone.png`, maskColor: '#555555' },
+  { name: 'Water', texture: `${import.meta.env.BASE_URL}textures/water.png`, maskColor: '#20B2AA' },
 ];
 
 const BRUSH_BASE_SIZE = 30;
