@@ -429,11 +429,11 @@ canvas.addEventListener('pointerdown', (e) => {
   scratch(e.clientX, e.clientY);
 });
 canvas.addEventListener('pointermove', handlePointerMove);
-window.addEventListener('pointerup', (e) => {
+window.addEventListener('pointerup', () => {
   isPointerDown = false;
   endCombo();
 });
-window.addEventListener('pointercancel', (e) => {
+window.addEventListener('pointercancel', () => {
   isPointerDown = false;
   endCombo();
 });
