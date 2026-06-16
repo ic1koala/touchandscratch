@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Touch & Scratch</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- The hidden texture image will be drawn behind the canvas, or as background of the container -->
+    <div id="game-container">
+      <div id="texture-layer"></div>
+      <canvas id="scratch-layer"></canvas>
+      
+      <!-- UI Layer -->
+      <div id="ui-layer">
+        <header class="top-bar">
+          <div class="stats">
+            <div class="stat-item coin-counter">
+              <span class="icon">🪙</span>
+              <span id="coin-display">0</span>
+            </div>
+            <div class="stat-item level-display">
+              <span class="icon">⭐</span>
+              <span id="level-display">Level 1 (Wood)</span>
+            </div>
+          </div>
+          <button id="shop-btn" class="glass-btn">Shop</button>
+        </header>
+
+        <div class="center-ui">
+          <div id="combo-display" class="combo hidden">
+            <span id="combo-multiplier">x1.0</span>
+            <div class="combo-bar-container">
+              <div id="combo-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="bottom-bar">
+          <div class="progress-container">
+            <div id="progress-text">0% Revealed</div>
+            <div class="progress-bar-bg">
+              <div id="progress-bar-fill"></div>
+            </div>
+          </div>
+        </footer>
+
+        <!-- Shop Modal -->
+        <div id="shop-modal" class="modal hidden">
+          <div class="modal-content glass-panel">
+            <h2>Upgrades</h2>
+            <div class="upgrade-list">
+              <div class="upgrade-item">
+                <div class="upgrade-info">
+                  <h3>Brush Size</h3>
+                  <p>Scratch a larger area at once.</p>
+                  <p class="level-text">Lvl <span id="brush-lvl">1</span></p>
+                </div>
+                <button id="upgrade-brush-btn" class="upgrade-btn">
+                  Cost: <span id="brush-cost">100</span> 🪙
+                </button>
+              </div>
+              <div class="upgrade-item">
+                <div class="upgrade-info">
+                  <h3>Coin Multiplier</h3>
+                  <p>Earn more coins per pixel.</p>
+                  <p class="level-text">Lvl <span id="mult-lvl">1</span></p>
+                </div>
+                <button id="upgrade-mult-btn" class="upgrade-btn">
+                  Cost: <span id="mult-cost">250</span> 🪙
+                </button>
+              </div>
+            </div>
+            <button id="close-shop-btn" class="glass-btn primary">Close</button>
+          </div>
+        </div>
+
+        <!-- Level Complete Modal -->
+        <div id="level-modal" class="modal hidden">
+          <div class="modal-content glass-panel text-center">
+            <h2 class="glow-text">Texture Revealed!</h2>
+            <p>You earned <span id="level-bonus">1000</span> bonus coins!</p>
+            <button id="next-level-btn" class="glass-btn primary pulse">Next Level</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
