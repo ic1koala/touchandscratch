@@ -267,9 +267,13 @@ function initLevel() {
   ctx.globalCompositeOperation = 'source-over';
   
   if (state.gameMode === 'girl') {
-    // Holographic background in CSS
-    textureLayer.style.background = 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)';
-    textureLayer.style.backgroundImage = 'none';
+    const nextIndex = currentIndex + 1;
+    const nextLevel = levelArray[nextIndex % levelArray.length];
+    
+    textureLayer.style.background = 'none';
+    textureLayer.style.backgroundImage = `url(${nextLevel.texture})`;
+    textureLayer.style.backgroundSize = 'cover';
+    textureLayer.style.backgroundPosition = 'center top';
     
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -281,7 +285,7 @@ function initLevel() {
       const w = img.width * scale;
       const h = img.height * scale;
       const x = (window.innerWidth - w) / 2;
-      const y = (window.innerHeight - h) / 2;
+      const y = 0;
       
       ctx.globalCompositeOperation = 'source-over';
       ctx.drawImage(img, x, y, w, h);
