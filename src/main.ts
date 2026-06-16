@@ -2,6 +2,8 @@ import './style.css';
 
 // --- GAME STATE & CONFIG ---
 interface GameState {
+  gameMode: "texture" | "girl";
+  girlLevelIndex: number;
   coins: number;
   levelIndex: number;
   brushLevel: number;
@@ -15,6 +17,8 @@ interface GameState {
 const defaultState: GameState = {
   coins: 0,
   levelIndex: 0,
+  girlLevelIndex: 0,
+  gameMode: "texture",
   brushLevel: 1,
   multiplierLevel: 1,
   autobotLevel: 0,
@@ -30,6 +34,18 @@ const LEVELS = Array.from({length: 40}).map((_, i) => ({
   texture: `https://picsum.photos/seed/wall${i}/800/600`,
   maskColor: `hsl(${i * 137.5 % 360}, 50%, 20%)`
 }));
+
+
+const GIRL_LEVELS = Array.from({length: 40}).map((_, i) => ({
+  name: `Girl ${i+1}`,
+  // Using Unsplash source with keywords 'woman,portrait' as dummy.
+  texture: `https://images.unsplash.com/photo-${1500000000000 + i}?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=600&w=800&ixid=MnwxfDB8MXxyYW5kb218MHx8d29tYW4scG9ydHJhaXR8fHx8fHwxNjgxMTExMTEx&ixlib=rb-4.0.3&q=80`, // Note: Real random API would be better, but we'll use a placeholder structure. Actually, source.unsplash is deprecated. Let's use a reliable random seed image.
+  maskColor: '#FFC0CB' // Pink mask
+}));
+// Better reliable image generator for now:
+for(let i=0; i<40; i++) {
+  GIRL_LEVELS[i].texture = `https://picsum.photos/seed/girl${i}/800/600`; // Placeholder
+}
 
 const BRUSH_BASE_SIZE = 15;
 const BRUSH_UPGRADE_AMOUNT = 5;
@@ -94,7 +110,28 @@ const levelBonusEl = document.getElementById('level-bonus')!;
 const failModal = document.getElementById('fail-modal')!;
 const retryBtn = document.getElementById('retry-btn')!;
 
+
+// Home Screen Elements
+const homeScreen = document.getElementById('home-screen')!;
+const btnModeTexture = document.getElementById('btn-mode-texture')!;
+const btnModeGirl = document.getElementById('btn-mode-girl')!;
+
+btnModeTexture.addEventListener('click', () => {
+  state.gameMode = 'texture';
+  homeScreen.style.display = 'none';
+  saveState();
+  initLevel();
+});
+
+btnModeGirl.addEventListener('click', () => {
+  state.gameMode = 'girl';
+  homeScreen.style.display = 'none';
+  saveState();
+  initLevel();
+});
+
 // --- AUDIO SYSTEM ---
+
 const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
 
 function playScratchSound() {
@@ -218,9 +255,14 @@ function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, he
 }
 
 function initLevel() {
-  const currentLevel = LEVELS[state.levelIndex % LEVELS.length];
+  
+  const isGirlMode = state.gameMode === 'girl';
+  const levelArray = isGirlMode ? GIRL_LEVELS : LEVELS;
+  const currentIndex = isGirlMode ? state.girlLevelIndex : state.levelIndex;
+  const currentLevel = levelArray[currentIndex % levelArray.length];
+
   textureLayer.style.backgroundImage = `url(${currentLevel.texture})`;
-  levelDisplay.textContent = `Level ${state.levelIndex + 1} (${currentLevel.name})`;
+  levelDisplay.textContent = `Level ${currentIndex + 1} (${currentLevel.name})`;
   
   ctx.globalCompositeOperation = 'source-over';
   const gradient = ctx.createLinearGradient(0, 0, window.innerWidth, window.innerHeight);
@@ -237,7 +279,7 @@ function initLevel() {
     ctx.fill();
   }
 
-  isDalgonaMode = state.levelIndex >= 19;
+  isDalgonaMode = !isGirlMode && state.levelIndex >= 19;
   
   if (isDalgonaMode) {
     // Draw Dalgona outline guide on the main canvas so user can see it
@@ -405,7 +447,7 @@ function retryLevel() {
 }
 
 function nextLevel() {
-  state.levelIndex++;
+  if (state.gameMode === "girl") state.girlLevelIndex++; else state.levelIndex++;
   levelModal.classList.add('hidden');
   canvas.style.pointerEvents = 'auto';
   saveState();
@@ -466,7 +508,11 @@ function resizeParticleCanvas() {
 
 function createParticle(x: number, y: number) {
   if (Math.random() > 0.9) return;
-  const currentLevel = LEVELS[state.levelIndex % LEVELS.length];
+  
+  const levelArray = state.gameMode === 'girl' ? GIRL_LEVELS : LEVELS;
+  const currentIndex = state.gameMode === 'girl' ? state.girlLevelIndex : state.levelIndex;
+  const currentLevel = levelArray[currentIndex % levelArray.length];
+
   particles.push({
     x, y,
     vx: (Math.random() - 0.5) * 5,
@@ -631,6 +677,7 @@ setInterval(() => {
 // --- BOOTSTRAP ---
 window.addEventListener('resize', () => { resizeCanvas(); resizeParticleCanvas(); });
 loadState();
+homeScreen.style.display = 'flex'; // Always show home on boot
 resizeCanvas();
 resizeParticleCanvas();
 updateUI();
