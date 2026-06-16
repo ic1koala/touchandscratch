@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- The hidden texture image will be drawn behind the canvas, or as background of the container -->
     <div id="game-container">
       <div id="texture-layer"></div>
       <canvas id="scratch-layer"></canvas>
@@ -48,40 +47,87 @@
 
         <!-- Shop Modal -->
         <div id="shop-modal" class="modal hidden">
-          <div class="modal-content glass-panel">
-            <h2>Upgrades</h2>
+          <div class="modal-content glass-panel" style="max-height: 80vh; overflow-y: auto;">
+            <h2>Upgrades & Brushes</h2>
             <div class="upgrade-list">
               <div class="upgrade-item">
                 <div class="upgrade-info">
                   <h3>Brush Size</h3>
-                  <p>Scratch a larger area at once.</p>
                   <p class="level-text">Lvl <span id="brush-lvl">1</span></p>
                 </div>
-                <button id="upgrade-brush-btn" class="upgrade-btn">
-                  Cost: <span id="brush-cost">100</span> 🪙
-                </button>
+                <button id="upgrade-brush-btn" class="upgrade-btn">Cost: <span id="brush-cost">100</span> 🪙</button>
               </div>
               <div class="upgrade-item">
                 <div class="upgrade-info">
                   <h3>Coin Multiplier</h3>
-                  <p>Earn more coins per pixel.</p>
                   <p class="level-text">Lvl <span id="mult-lvl">1</span></p>
                 </div>
-                <button id="upgrade-mult-btn" class="upgrade-btn">
-                  Cost: <span id="mult-cost">250</span> 🪙
-                </button>
+                <button id="upgrade-mult-btn" class="upgrade-btn">Cost: <span id="mult-cost">250</span> 🪙</button>
+              </div>
+              <div class="upgrade-item">
+                <div class="upgrade-info">
+                  <h3>Auto-Scratcher Bot</h3>
+                  <p class="level-text">Lvl <span id="autobot-lvl">0</span></p>
+                </div>
+                <button id="upgrade-autobot-btn" class="upgrade-btn">Cost: <span id="autobot-cost">500</span> 🪙</button>
+              </div>
+              <div class="upgrade-item">
+                <div class="upgrade-info">
+                  <h3>Lucky Gem</h3>
+                  <p class="level-text">Lvl <span id="luck-lvl">0</span></p>
+                </div>
+                <button id="upgrade-luck-btn" class="upgrade-btn">Cost: <span id="luck-cost">1000</span> 🪙</button>
               </div>
             </div>
-            <button id="close-shop-btn" class="glass-btn primary">Close</button>
+            
+            <div id="brushes-section" class="hidden" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
+              <h3 style="margin-bottom: 10px; text-shadow: 0 0 5px #fff;">Special Brushes</h3>
+              <div class="upgrade-list">
+                <div class="upgrade-item">
+                  <div class="upgrade-info">
+                    <h3>Standard</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Normal round brush</p>
+                  </div>
+                  <button id="equip-standard" class="upgrade-btn" style="background: var(--primary-gradient);">Equipped</button>
+                </div>
+                <div class="upgrade-item">
+                  <div class="upgrade-info">
+                    <h3>Needle</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Ultra fine point (Great for Dalgona)</p>
+                  </div>
+                  <button id="buy-needle" class="upgrade-btn">5000 🪙</button>
+                  <button id="equip-needle" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
+                </div>
+                <div class="upgrade-item">
+                  <div class="upgrade-info">
+                    <h3>Scraper</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Flat wide edge</p>
+                  </div>
+                  <button id="buy-scraper" class="upgrade-btn">10000 🪙</button>
+                  <button id="equip-scraper" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
+                </div>
+              </div>
+            </div>
+
+            <button id="close-shop-btn" class="glass-btn primary" style="margin-top: 20px;">Close</button>
           </div>
         </div>
 
         <!-- Level Complete Modal -->
         <div id="level-modal" class="modal hidden">
           <div class="modal-content glass-panel text-center">
-            <h2 class="glow-text">Texture Revealed!</h2>
+            <h2 class="glow-text">Success!</h2>
             <p>You earned <span id="level-bonus">1000</span> bonus coins!</p>
             <button id="next-level-btn" class="glass-btn primary pulse">Next Level</button>
+          </div>
+        </div>
+
+        <!-- Fail Modal -->
+        <div id="fail-modal" class="modal hidden">
+          <div class="modal-content glass-panel text-center">
+            <h2 class="glow-text" style="color: #ff4444; text-shadow: 0 0 10px #ff4444;">CRACKED!</h2>
+            <p>You scratched too far outside the line!</p>
+            <button id="retry-btn" class="glass-btn primary pulse" style="background: linear-gradient(45deg, #ff4444, #aa0000);">Retry Level</button>
           </div>
         </div>
 
