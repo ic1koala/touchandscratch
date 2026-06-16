@@ -113,9 +113,13 @@ function saveState() {
 }
 
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  // Re-fill mask if resized, simplest is to reset level (or we could redraw erased paths, but for simplicity reset)
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+  ctx.scale(dpr, dpr);
+  // Re-fill mask if resized, simplest is to reset level
   initLevel();
 }
 
@@ -126,6 +130,12 @@ let lastX: number | null = null;
 let lastY: number | null = null;
 let throttleCalc = 0;
 
+// Offscreen canvas for fast progress calculation
+const offscreenCanvas = document.createElement('canvas');
+offscreenCanvas.width = 100;
+offscreenCanvas.height = 100;
+const offCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true })!;
+
 function initLevel() {
   const currentLevel = LEVELS[state.levelIndex % LEVELS.length];
   textureLayer.style.backgroundImage = `url(${currentLevel.texture})`;
@@ -134,25 +144,24 @@ function initLevel() {
   // Fill mask
   ctx.globalCompositeOperation = 'source-over';
   
-  // Add some noise or gradient to the mask based on level
-  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  const gradient = ctx.createLinearGradient(0, 0, window.innerWidth, window.innerHeight);
   gradient.addColorStop(0, currentLevel.maskColor);
   gradient.addColorStop(1, '#000000');
   
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   
   // Draw some "dirt" pattern
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
   for(let i=0; i<1000; i++) {
     ctx.beginPath();
-    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*5, 0, Math.PI*2);
+    ctx.arc(Math.random()*window.innerWidth, Math.random()*window.innerHeight, Math.random()*5, 0, Math.PI*2);
     ctx.fill();
   }
 
   ctx.globalCompositeOperation = 'destination-out';
   
-  totalPixels = canvas.width * canvas.height;
+  totalPixels = offscreenCanvas.width * offscreenCanvas.height;
   clearedPixels = 0;
   updateProgress(0);
 }
@@ -198,20 +207,25 @@ function scratch(x: number, y: number) {
   maintainCombo();
   updateUI();
 
-  // Calc progress occasionally
+  // Calc progress less frequently (every 20 frames) to prevent lag
   throttleCalc++;
-  if (throttleCalc % 10 === 0) {
+  if (throttleCalc % 20 === 0) {
     calcProgress();
   }
 }
 
 function calcProgress() {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // Draw current canvas scaled down to offscreen canvas (100x100)
+  offCtx.clearRect(0, 0, 100, 100);
+  offCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 100, 100);
+  
+  const imageData = offCtx.getImageData(0, 0, 100, 100);
   const data = imageData.data;
   let cleared = 0;
-  // Check alpha channel (every 4th byte). We sample every 16th pixel for performance
-  for (let i = 3; i < data.length; i += 4 * 16) {
-    if (data[i] < 10) cleared += 16;
+  
+  // Sample alpha
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 50) cleared++; // less opaque = cleared
   }
   
   clearedPixels = cleared;
@@ -463,9 +477,12 @@ updateUI();
 renderParticles();
 
 // Preload audio context on first user interaction
-window.addEventListener('pointerdown', function unlockAudio() {
+function unlockAudio() {
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
   window.removeEventListener('pointerdown', unlockAudio);
-});
+  window.removeEventListener('touchstart', unlockAudio);
+}
+window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('touchstart', unlockAudio);
