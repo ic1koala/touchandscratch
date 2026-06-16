@@ -400,8 +400,10 @@ upgradeMultBtn.addEventListener('click', () => {
 nextLevelBtn.addEventListener('click', nextLevel);
 
 // --- INPUT EVENTS ---
+let isPointerDown = false;
+
 const handlePointerMove = (e: PointerEvent) => {
-  if (e.buttons > 0) {
+  if (isPointerDown) {
     e.preventDefault();
     scratch(e.clientX, e.clientY);
   }
@@ -409,15 +411,43 @@ const handlePointerMove = (e: PointerEvent) => {
 
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  isPointerDown = true;
   scratch(e.clientX, e.clientY);
 });
 canvas.addEventListener('pointermove', handlePointerMove);
-window.addEventListener('pointerup', endCombo);
-window.addEventListener('pointercancel', endCombo);
+window.addEventListener('pointerup', (e) => {
+  isPointerDown = false;
+  endCombo();
+});
+window.addEventListener('pointercancel', (e) => {
+  isPointerDown = false;
+  endCombo();
+});
 
-// Add touch-specific listeners to prevent scrolling/zooming on mobile
-canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+// For older Safari or specific mobile browsers where pointer events are finicky
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  isPointerDown = true;
+  const touch = e.touches[0];
+  scratch(touch.clientX, touch.clientY);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (isPointerDown) {
+    const touch = e.touches[0];
+    scratch(touch.clientX, touch.clientY);
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', () => {
+  isPointerDown = false;
+  endCombo();
+});
+window.addEventListener('touchcancel', () => {
+  isPointerDown = false;
+  endCombo();
+});
 
 
 // --- BOOTSTRAP ---
