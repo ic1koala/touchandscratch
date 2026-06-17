@@ -8,7 +8,6 @@ interface GameState {
   levelIndex: number;
   brushLevel: number;
   multiplierLevel: number;
-  autobotLevel: number;
   luckLevel: number;
   equippedBrush: string; // 'standard', 'needle', 'scraper'
   unlockedBrushes: string[];
@@ -21,7 +20,6 @@ const defaultState: GameState = {
   gameMode: "texture",
   brushLevel: 1,
   multiplierLevel: 1,
-  autobotLevel: 0,
   luckLevel: 0,
   equippedBrush: 'standard',
   unlockedBrushes: ['standard']
@@ -47,15 +45,12 @@ const GIRL_LEVELS = Array.from({length: 50}).map((_, i) => ({
 
 
 
-const BRUSH_BASE_SIZE = 15;
-const BRUSH_UPGRADE_AMOUNT = 5;
-const MULTIPLIER_BASE = 1;
+const MULTIPLIER_BASE = 1.0;
 const MULTIPLIER_UPGRADE_AMOUNT = 0.5;
 
 // Cost formulas
 const getBrushCost = () => Math.floor(100 * Math.pow(1.5, state.brushLevel - 1));
-const getMultCost = () => Math.floor(250 * Math.pow(1.8, state.multiplierLevel - 1));
-const getAutobotCost = () => Math.floor(500 * Math.pow(2, state.autobotLevel));
+const getMultCost = () => Math.floor(250 * Math.pow(2, state.multiplierLevel - 1));
 const getLuckCost = () => Math.floor(1000 * Math.pow(2, state.luckLevel));
 
 // Combo System
@@ -89,10 +84,6 @@ const multLvlEl = document.getElementById('mult-lvl') as HTMLSpanElement;
 const multCostEl = document.getElementById('mult-cost') as HTMLSpanElement;
 const upgradeMultBtn = document.getElementById('upgrade-mult-btn') as HTMLButtonElement;
 
-const autobotLvlEl = document.getElementById('autobot-lvl') as HTMLSpanElement;
-const autobotCostEl = document.getElementById('autobot-cost') as HTMLSpanElement;
-const upgradeAutobotBtn = document.getElementById('upgrade-autobot-btn') as HTMLButtonElement;
-
 const luckLvlEl = document.getElementById('luck-lvl') as HTMLSpanElement;
 const luckCostEl = document.getElementById('luck-cost') as HTMLSpanElement;
 const upgradeLuckBtn = document.getElementById('upgrade-luck-btn') as HTMLButtonElement;
@@ -100,7 +91,19 @@ const upgradeLuckBtn = document.getElementById('upgrade-luck-btn') as HTMLButton
 // Shop Brushes
 const equipStandardBtn = document.getElementById('equip-standard') as HTMLButtonElement;
 const buyNeedleBtn = document.getElementById('buy-needle') as HTMLButtonElement;
-const buyScraperBtn = document.getElementById('buy-scraper') as HTMLButtonElement;
+const equipNeedleBtn = document.getElementById('equip-needle') as HTMLButtonElement;
+const buyEraserBtn = document.getElementById('buy-eraser') as HTMLButtonElement;
+const equipEraserBtn = document.getElementById('equip-eraser') as HTMLButtonElement;
+const buyRollerBtn = document.getElementById('buy-roller') as HTMLButtonElement;
+const equipRollerBtn = document.getElementById('equip-roller') as HTMLButtonElement;
+
+// Navigation UI
+const homeBtn = document.getElementById('home-btn') as HTMLButtonElement;
+const levelDisplayBtn = document.getElementById('level-display-btn') as HTMLDivElement;
+const levelSelectionModal = document.getElementById('level-selection-modal') as HTMLDivElement;
+const closeLevelSelectionBtn = document.getElementById('close-level-selection-btn') as HTMLButtonElement;
+const levelGrid = document.getElementById('level-grid') as HTMLDivElement;
+const uiLayer = document.getElementById('ui-layer') as HTMLDivElement;
 
 const levelModal = document.getElementById('level-modal')!;
 const nextLevelBtn = document.getElementById('next-level-btn')!;
@@ -250,7 +253,7 @@ function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, he
     ctxToDraw.fillStyle = 'red';
     ctxToDraw.fill();
     ctxToDraw.globalCompositeOperation = 'destination-out';
-    ctxToDraw.lineWidth = 10;
+    ctxToDraw.lineWidth = 30; // 15px safe buffer
     ctxToDraw.stroke();
     ctxToDraw.globalCompositeOperation = 'source-over';
   }
@@ -315,13 +318,14 @@ function initLevel() {
 
 function getBrushSettings() {
   if (state.equippedBrush === 'needle') {
-    return { size: 3, cap: 'round' as CanvasLineCap, join: 'round' as CanvasLineJoin };
-  } else if (state.equippedBrush === 'scraper') {
-    return { size: BRUSH_BASE_SIZE * 1.5, cap: 'square' as CanvasLineCap, join: 'miter' as CanvasLineJoin };
+    return { size: 3, cap: 'round' as CanvasLineCap, join: 'round' as CanvasLineJoin, isSquare: false };
+  } else if (state.equippedBrush === 'eraser') {
+    return { size: 40, cap: 'square' as CanvasLineCap, join: 'miter' as CanvasLineJoin, isSquare: true };
+  } else if (state.equippedBrush === 'roller') {
+    return { size: 80, cap: 'square' as CanvasLineCap, join: 'miter' as CanvasLineJoin, isSquare: true };
   }
-  // Standard
-  const brushSize = BRUSH_BASE_SIZE + (state.brushLevel - 1) * BRUSH_UPGRADE_AMOUNT;
-  return { size: brushSize, cap: 'round' as CanvasLineCap, join: 'round' as CanvasLineJoin };
+  // Standard (Coin)
+  return { size: 20, cap: 'round' as CanvasLineCap, join: 'round' as CanvasLineJoin, isSquare: false };
 }
 
 function scratch(x: number, y: number) {
@@ -334,13 +338,19 @@ function scratch(x: number, y: number) {
 
   const bs = getBrushSettings();
 
-  ctx.beginPath();
-  ctx.lineCap = bs.cap;
-  ctx.lineJoin = bs.join;
-  ctx.lineWidth = bs.size * 2;
-  ctx.moveTo(lastX!, lastY!);
-  ctx.lineTo(x, y);
-  ctx.stroke();
+  ctx.globalCompositeOperation = 'destination-out';
+  if (bs.isSquare) {
+    ctx.fillRect(x - bs.size/2, y - bs.size/2, bs.size, bs.size);
+  } else {
+    ctx.beginPath();
+    ctx.lineCap = bs.cap;
+    ctx.lineJoin = bs.join;
+    ctx.lineWidth = bs.size;
+    ctx.moveTo(lastX!, lastY!);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
 
   createParticle(x, y);
 
@@ -564,10 +574,6 @@ function updateUI() {
   multCostEl.textContent = getMultCost().toString();
   upgradeMultBtn.disabled = state.coins < getMultCost();
   
-  autobotLvlEl.textContent = state.autobotLevel.toString();
-  autobotCostEl.textContent = getAutobotCost().toString();
-  upgradeAutobotBtn.disabled = state.coins < getAutobotCost();
-  
   luckLvlEl.textContent = state.luckLevel.toString();
   luckCostEl.textContent = getLuckCost().toString();
   upgradeLuckBtn.disabled = state.coins < getLuckCost();
@@ -579,19 +585,34 @@ function updateUI() {
     // Needle
     if (state.unlockedBrushes.includes('needle')) {
       buyNeedleBtn.classList.add('hidden');
-      document.getElementById('equip-needle')!.classList.remove('hidden');
-      document.getElementById('equip-needle')!.textContent = state.equippedBrush === 'needle' ? 'Equipped' : 'Equip';
+      equipNeedleBtn.classList.remove('hidden');
+      equipNeedleBtn.textContent = state.equippedBrush === 'needle' ? 'Equipped' : 'Equip';
     } else {
-      buyNeedleBtn.disabled = state.coins < 5000;
+      buyNeedleBtn.classList.remove('hidden');
+      equipNeedleBtn.classList.add('hidden');
+      buyNeedleBtn.disabled = state.coins < 1000;
     }
     
-    // Scraper
-    if (state.unlockedBrushes.includes('scraper')) {
-      buyScraperBtn.classList.add('hidden');
-      document.getElementById('equip-scraper')!.classList.remove('hidden');
-      document.getElementById('equip-scraper')!.textContent = state.equippedBrush === 'scraper' ? 'Equipped' : 'Equip';
+    // Eraser
+    if (state.unlockedBrushes.includes('eraser')) {
+      buyEraserBtn.classList.add('hidden');
+      equipEraserBtn.classList.remove('hidden');
+      equipEraserBtn.textContent = state.equippedBrush === 'eraser' ? 'Equipped' : 'Equip';
     } else {
-      buyScraperBtn.disabled = state.coins < 10000;
+      buyEraserBtn.classList.remove('hidden');
+      equipEraserBtn.classList.add('hidden');
+      buyEraserBtn.disabled = state.coins < 5000;
+    }
+    
+    // Roller
+    if (state.unlockedBrushes.includes('roller')) {
+      buyRollerBtn.classList.add('hidden');
+      equipRollerBtn.classList.remove('hidden');
+      equipRollerBtn.textContent = state.equippedBrush === 'roller' ? 'Equipped' : 'Equip';
+    } else {
+      buyRollerBtn.classList.remove('hidden');
+      equipRollerBtn.classList.add('hidden');
+      buyRollerBtn.disabled = state.coins < 20000;
     }
     
     equipStandardBtn.textContent = state.equippedBrush === 'standard' ? 'Equipped' : 'Equip';
@@ -613,31 +634,71 @@ upgradeMultBtn.addEventListener('click', () => {
   const cost = getMultCost();
   if (state.coins >= cost) { state.coins -= cost; state.multiplierLevel++; saveState(); updateUI(); }
 });
-upgradeAutobotBtn.addEventListener('click', () => {
-  const cost = getAutobotCost();
-  if (state.coins >= cost) { state.coins -= cost; state.autobotLevel++; saveState(); updateUI(); }
-});
 upgradeLuckBtn.addEventListener('click', () => {
   const cost = getLuckCost();
   if (state.coins >= cost) { state.coins -= cost; state.luckLevel++; saveState(); updateUI(); }
 });
 
 buyNeedleBtn.addEventListener('click', () => {
-  if (state.coins >= 5000) { state.coins -= 5000; state.unlockedBrushes.push('needle'); state.equippedBrush = 'needle'; saveState(); updateUI(); }
+  if (state.coins >= 1000) { state.coins -= 1000; state.unlockedBrushes.push('needle'); state.equippedBrush = 'needle'; saveState(); updateUI(); }
 });
-document.getElementById('equip-needle')!.addEventListener('click', () => {
+equipNeedleBtn.addEventListener('click', () => {
   state.equippedBrush = 'needle'; saveState(); updateUI();
 });
 
-buyScraperBtn.addEventListener('click', () => {
-  if (state.coins >= 10000) { state.coins -= 10000; state.unlockedBrushes.push('scraper'); state.equippedBrush = 'scraper'; saveState(); updateUI(); }
+buyEraserBtn.addEventListener('click', () => {
+  if (state.coins >= 5000) { state.coins -= 5000; state.unlockedBrushes.push('eraser'); state.equippedBrush = 'eraser'; saveState(); updateUI(); }
 });
-document.getElementById('equip-scraper')!.addEventListener('click', () => {
-  state.equippedBrush = 'scraper'; saveState(); updateUI();
+equipEraserBtn.addEventListener('click', () => {
+  state.equippedBrush = 'eraser'; saveState(); updateUI();
+});
+
+buyRollerBtn.addEventListener('click', () => {
+  if (state.coins >= 20000) { state.coins -= 20000; state.unlockedBrushes.push('roller'); state.equippedBrush = 'roller'; saveState(); updateUI(); }
+});
+equipRollerBtn.addEventListener('click', () => {
+  state.equippedBrush = 'roller'; saveState(); updateUI();
 });
 
 equipStandardBtn.addEventListener('click', () => {
   state.equippedBrush = 'standard'; saveState(); updateUI();
+});
+
+// Navigation & Modals
+homeBtn.addEventListener('click', () => {
+  uiLayer.classList.remove('visible');
+  homeScreen.style.display = 'flex';
+});
+
+levelDisplayBtn.addEventListener('click', () => {
+  levelGrid.innerHTML = '';
+  const isGirlMode = state.gameMode === 'girl';
+  const totalLevels = 50;
+  
+  for(let i = 0; i < totalLevels; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'glass-btn';
+    btn.style.padding = '10px 5px';
+    btn.style.fontSize = '1.2rem';
+    btn.textContent = (i + 1).toString();
+    btn.addEventListener('click', () => {
+      if (isGirlMode) {
+        state.girlLevelIndex = i;
+      } else {
+        state.levelIndex = i;
+      }
+      saveState();
+      initLevel();
+      levelSelectionModal.classList.remove('hidden');
+    });
+    levelGrid.appendChild(btn);
+  }
+  
+  levelSelectionModal.classList.remove('hidden');
+});
+
+closeLevelSelectionBtn.addEventListener('click', () => {
+  levelSelectionModal.classList.add('hidden');
 });
 
 // --- INPUT EVENTS ---
@@ -662,19 +723,7 @@ canvas.addEventListener('touchmove', (e) => {
 window.addEventListener('touchend', () => { isPointerDown = false; endCombo(); });
 window.addEventListener('touchcancel', () => { isPointerDown = false; endCombo(); });
 
-// Auto-Bot Loop
-setInterval(() => {
-  if (state.autobotLevel > 0 && canvas.style.pointerEvents !== 'none') {
-     const bx = Math.random() * window.innerWidth;
-     const by = Math.random() * window.innerHeight;
-     const wasScratching = isScratching;
-     if (!isScratching) { lastX = bx; lastY = by; }
-     scratch(bx, by);
-     if (!wasScratching && !isPointerDown) {
-       setTimeout(() => { if (!isPointerDown) endCombo(); }, 50);
-     }
-  }
-}, 1000);
+
 
 // --- BOOTSTRAP ---
 window.addEventListener('resize', () => { resizeCanvas(); resizeParticleCanvas(); });

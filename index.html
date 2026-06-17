@@ -25,11 +25,12 @@
       <div id="ui-layer">
         <header class="top-bar">
           <div class="stats">
+            <button id="home-btn" class="glass-btn pulse" style="margin-right: 10px; padding: 5px 10px; display: flex; align-items: center; justify-content: center;" title="Back to Home">🏠</button>
             <div class="stat-item coin-counter">
               <span class="icon">🪙</span>
               <span id="coin-display">0</span>
             </div>
-            <div class="stat-item level-display">
+            <div class="stat-item level-display" id="level-display-btn" style="cursor: pointer;" title="Select Level">
               <span class="icon">⭐</span>
               <span id="level-display">Level 1 (Wood)</span>
             </div>
@@ -74,13 +75,7 @@
                 </div>
                 <button id="upgrade-mult-btn" class="upgrade-btn">Cost: <span id="mult-cost">250</span> 🪙</button>
               </div>
-              <div class="upgrade-item">
-                <div class="upgrade-info">
-                  <h3>Auto-Scratcher Bot</h3>
-                  <p class="level-text">Lvl <span id="autobot-lvl">0</span></p>
-                </div>
-                <button id="upgrade-autobot-btn" class="upgrade-btn">Cost: <span id="autobot-cost">500</span> 🪙</button>
-              </div>
+
               <div class="upgrade-item">
                 <div class="upgrade-info">
                   <h3>Lucky Gem</h3>
@@ -95,31 +90,50 @@
               <div class="upgrade-list">
                 <div class="upgrade-item">
                   <div class="upgrade-info">
-                    <h3>Standard</h3>
-                    <p style="font-size: 0.8em; color: #ccc;">Normal round brush</p>
+                    <h3>Coin</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Normal round brush (Size 20)</p>
                   </div>
                   <button id="equip-standard" class="upgrade-btn" style="background: var(--primary-gradient);">Equipped</button>
                 </div>
                 <div class="upgrade-item">
                   <div class="upgrade-info">
                     <h3>Needle</h3>
-                    <p style="font-size: 0.8em; color: #ccc;">Ultra fine point (Great for Dalgona)</p>
+                    <p style="font-size: 0.8em; color: #ccc;">Fine detail brush (Size 3)</p>
                   </div>
-                  <button id="buy-needle" class="upgrade-btn">5000 🪙</button>
+                  <button id="buy-needle" class="upgrade-btn">Cost: 1000 🪙</button>
                   <button id="equip-needle" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
                 </div>
                 <div class="upgrade-item">
                   <div class="upgrade-info">
-                    <h3>Scraper</h3>
-                    <p style="font-size: 0.8em; color: #ccc;">Flat wide edge</p>
+                    <h3>Eraser</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Medium square brush (Size 40)</p>
                   </div>
-                  <button id="buy-scraper" class="upgrade-btn">10000 🪙</button>
-                  <button id="equip-scraper" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
+                  <button id="buy-eraser" class="upgrade-btn">Cost: 5000 🪙</button>
+                  <button id="equip-eraser" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
+                </div>
+                <div class="upgrade-item">
+                  <div class="upgrade-info">
+                    <h3>Roller</h3>
+                    <p style="font-size: 0.8em; color: #ccc;">Huge square brush (Size 80)</p>
+                  </div>
+                  <button id="buy-roller" class="upgrade-btn">Cost: 20000 🪙</button>
+                  <button id="equip-roller" class="upgrade-btn hidden" style="background: var(--primary-gradient);">Equip</button>
                 </div>
               </div>
             </div>
 
             <button id="close-shop-btn" class="glass-btn primary" style="margin-top: 20px;">Close</button>
+          </div>
+        </div>
+
+        <!-- Level Selection Modal -->
+        <div id="level-selection-modal" class="modal hidden">
+          <div class="modal-content glass-panel" style="max-height: 80vh; overflow-y: auto; width: 90%; max-width: 500px;">
+            <h2>Select Level</h2>
+            <div id="level-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-top: 20px;">
+              <!-- Buttons injected by JS -->
+            </div>
+            <button id="close-level-selection-btn" class="glass-btn primary" style="margin-top: 20px; width: 100%;">Close</button>
           </div>
         </div>
 
