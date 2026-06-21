@@ -2,8 +2,10 @@ import './style.css';
 
 // --- GAME STATE & CONFIG ---
 interface GameState {
-  gameMode: "texture" | "girl";
-  girlLevelIndex: number;
+  gameMode: "texture" | "heritage";
+  heritageLevelIndex: number;
+  unlockedTextureLevel: number;
+  unlockedHeritageLevel: number;
   coins: number;
   levelIndex: number;
   brushLevel: number;
@@ -16,7 +18,9 @@ interface GameState {
 const defaultState: GameState = {
   coins: 0,
   levelIndex: 0,
-  girlLevelIndex: 0,
+  heritageLevelIndex: 0,
+  unlockedTextureLevel: 0,
+  unlockedHeritageLevel: 0,
   gameMode: "texture",
   brushLevel: 1,
   multiplierLevel: 1,
@@ -37,10 +41,10 @@ const LEVELS = Array.from({length: 40}).map((_, i) => ({
 
 
 
-const GIRL_LEVELS = Array.from({length: 50}).map((_, i) => ({
-  name: `Girl ${i+1}`,
-  texture: `${import.meta.env.BASE_URL}textures/girls/girl_swimsuit_${i+1}.png`,
-  maskColor: '#FFC0CB'
+const HERITAGE_LEVELS = Array.from({length: 50}).map((_, i) => ({
+  name: `World Heritage ${i+1}`,
+  texture: `${import.meta.env.BASE_URL}textures/heritage/heritage_${i+1}.png`,
+  maskColor: '#d2b48c'
 }));
 
 
@@ -49,9 +53,6 @@ const MULTIPLIER_BASE = 1.0;
 const MULTIPLIER_UPGRADE_AMOUNT = 0.5;
 
 // Cost formulas
-const getBrushCost = () => Math.floor(100 * Math.pow(1.5, state.brushLevel - 1));
-const getMultCost = () => Math.floor(250 * Math.pow(2, state.multiplierLevel - 1));
-const getLuckCost = () => Math.floor(1000 * Math.pow(2, state.luckLevel));
 
 // Combo System
 let combo = 1.0;
@@ -76,17 +77,8 @@ const shopBtn = document.getElementById('shop-btn') as HTMLButtonElement;
 const closeShopBtn = document.getElementById('close-shop-btn') as HTMLButtonElement;
 
 // Shop Upgrades
-const brushLvlEl = document.getElementById('brush-lvl') as HTMLSpanElement;
-const brushCostEl = document.getElementById('brush-cost') as HTMLSpanElement;
-const upgradeBrushBtn = document.getElementById('upgrade-brush-btn') as HTMLButtonElement;
-
-const multLvlEl = document.getElementById('mult-lvl') as HTMLSpanElement;
-const multCostEl = document.getElementById('mult-cost') as HTMLSpanElement;
-const upgradeMultBtn = document.getElementById('upgrade-mult-btn') as HTMLButtonElement;
-
-const luckLvlEl = document.getElementById('luck-lvl') as HTMLSpanElement;
-const luckCostEl = document.getElementById('luck-cost') as HTMLSpanElement;
-const upgradeLuckBtn = document.getElementById('upgrade-luck-btn') as HTMLButtonElement;
+const buyBombBtn = document.getElementById('buy-bomb') as HTMLButtonElement;
+const buyWiperBtn = document.getElementById('buy-wiper') as HTMLButtonElement;
 
 // Shop Brushes
 const equipStandardBtn = document.getElementById('equip-standard') as HTMLButtonElement;
@@ -121,13 +113,15 @@ const btnModeGirl = document.getElementById('btn-mode-girl')!;
 
 btnModeTexture.addEventListener('click', () => {
   state.gameMode = 'texture';
+  uiLayer.classList.add('visible');
   homeScreen.style.display = 'none';
   saveState();
   initLevel();
 });
 
 btnModeGirl.addEventListener('click', () => {
-  state.gameMode = 'girl';
+  state.gameMode = 'heritage';
+  uiLayer.classList.add('visible');
   homeScreen.style.display = 'none';
   saveState();
   initLevel();
@@ -260,12 +254,12 @@ function drawDalgonaShape(ctxToDraw: CanvasRenderingContext2D, width: number, he
 }
 
 function initLevel() {
-  const isGirlMode = state.gameMode === 'girl';
-  const levelArray = isGirlMode ? GIRL_LEVELS : LEVELS;
-  const currentIndex = isGirlMode ? state.girlLevelIndex : state.levelIndex;
+  const isHeritageMode = state.gameMode === 'heritage';
+  const levelArray = isHeritageMode ? HERITAGE_LEVELS : LEVELS;
+  const currentIndex = isHeritageMode ? state.heritageLevelIndex : state.levelIndex;
   const currentLevel = levelArray[currentIndex % levelArray.length];
   
-  isDalgonaMode = !isGirlMode && state.levelIndex >= 19;
+  isDalgonaMode = !isHeritageMode && state.levelIndex >= 19;
   levelDisplay.textContent = `Level ${currentIndex + 1}`;
   
   const nextIndex = currentIndex + 1;
@@ -459,7 +453,13 @@ function retryLevel() {
 }
 
 function nextLevel() {
-  if (state.gameMode === "girl") state.girlLevelIndex++; else state.levelIndex++;
+  if (state.gameMode === "heritage") {
+    state.heritageLevelIndex++;
+    state.unlockedHeritageLevel = Math.max(state.unlockedHeritageLevel, state.heritageLevelIndex);
+  } else {
+    state.levelIndex++;
+    state.unlockedTextureLevel = Math.max(state.unlockedTextureLevel, state.levelIndex);
+  }
   levelModal.classList.add('hidden');
   canvas.style.pointerEvents = 'auto';
   saveState();
@@ -521,8 +521,8 @@ function resizeParticleCanvas() {
 function createParticle(x: number, y: number) {
   if (Math.random() > 0.9) return;
   
-  const levelArray = state.gameMode === 'girl' ? GIRL_LEVELS : LEVELS;
-  const currentIndex = state.gameMode === 'girl' ? state.girlLevelIndex : state.levelIndex;
+  const levelArray = state.gameMode === 'heritage' ? HERITAGE_LEVELS : LEVELS;
+  const currentIndex = state.gameMode === 'heritage' ? state.heritageLevelIndex : state.levelIndex;
   const currentLevel = levelArray[currentIndex % levelArray.length];
 
   particles.push({
@@ -566,17 +566,8 @@ function renderParticles() {
 function updateUI() {
   coinDisplay.textContent = Math.floor(state.coins).toString();
   
-  brushLvlEl.textContent = state.brushLevel.toString();
-  brushCostEl.textContent = getBrushCost().toString();
-  upgradeBrushBtn.disabled = state.coins < getBrushCost();
-
-  multLvlEl.textContent = state.multiplierLevel.toString();
-  multCostEl.textContent = getMultCost().toString();
-  upgradeMultBtn.disabled = state.coins < getMultCost();
-  
-  luckLvlEl.textContent = state.luckLevel.toString();
-  luckCostEl.textContent = getLuckCost().toString();
-  upgradeLuckBtn.disabled = state.coins < getLuckCost();
+  buyBombBtn.disabled = state.coins < 500;
+  buyWiperBtn.disabled = state.coins < 1500;
   
   // Brushes
   if (state.levelIndex >= 19) {
@@ -626,18 +617,6 @@ closeShopBtn.addEventListener('click', () => { shopModal.classList.add('hidden')
 retryBtn.addEventListener('click', retryLevel);
 nextLevelBtn.addEventListener('click', nextLevel);
 
-upgradeBrushBtn.addEventListener('click', () => {
-  const cost = getBrushCost();
-  if (state.coins >= cost) { state.coins -= cost; state.brushLevel++; saveState(); updateUI(); }
-});
-upgradeMultBtn.addEventListener('click', () => {
-  const cost = getMultCost();
-  if (state.coins >= cost) { state.coins -= cost; state.multiplierLevel++; saveState(); updateUI(); }
-});
-upgradeLuckBtn.addEventListener('click', () => {
-  const cost = getLuckCost();
-  if (state.coins >= cost) { state.coins -= cost; state.luckLevel++; saveState(); updateUI(); }
-});
 
 buyNeedleBtn.addEventListener('click', () => {
   if (state.coins >= 1000) { state.coins -= 1000; state.unlockedBrushes.push('needle'); state.equippedBrush = 'needle'; saveState(); updateUI(); }
@@ -672,25 +651,33 @@ homeBtn.addEventListener('click', () => {
 
 levelDisplayBtn.addEventListener('click', () => {
   levelGrid.innerHTML = '';
-  const isGirlMode = state.gameMode === 'girl';
+  const isHeritageMode = state.gameMode === 'heritage';
   const totalLevels = 50;
+  const maxUnlocked = isHeritageMode ? state.unlockedHeritageLevel : state.unlockedTextureLevel;
   
   for(let i = 0; i < totalLevels; i++) {
     const btn = document.createElement('button');
     btn.className = 'glass-btn';
     btn.style.padding = '10px 5px';
     btn.style.fontSize = '1.2rem';
-    btn.textContent = (i + 1).toString();
-    btn.addEventListener('click', () => {
-      if (isGirlMode) {
-        state.girlLevelIndex = i;
-      } else {
-        state.levelIndex = i;
-      }
-      saveState();
-      initLevel();
-      levelSelectionModal.classList.remove('hidden');
-    });
+    
+    if (i <= maxUnlocked) {
+      btn.textContent = (i + 1).toString();
+      btn.addEventListener('click', () => {
+        if (isHeritageMode) {
+          state.heritageLevelIndex = i;
+        } else {
+          state.levelIndex = i;
+        }
+        saveState();
+        initLevel();
+        levelSelectionModal.classList.add('hidden');
+      });
+    } else {
+      btn.textContent = '🔒';
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+    }
     levelGrid.appendChild(btn);
   }
   

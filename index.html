@@ -18,7 +18,7 @@
       <div id="home-screen" class="modal" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10vh; background: url(/public/textures/home_bg.png) no-repeat center center; background-size: cover; z-index: 100;">
         <h1 style="font-size: 3rem; margin-bottom: 2rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Touch & Scratch</h1>
         <button id="btn-mode-texture" class="glass-btn primary pulse" style="margin-bottom: 1rem; font-size: 1.5rem; padding: 15px 30px;">Texture Mode</button>
-        <button id="btn-mode-girl" class="glass-btn pulse" style="font-size: 1.5rem; padding: 15px 30px; background: linear-gradient(45deg, #ff6b6b, #ff8e8b);">Girl Mode</button>
+        <button id="btn-mode-girl" class="glass-btn pulse" style="font-size: 1.5rem; padding: 15px 30px; background: linear-gradient(45deg, #a0522d, #cd853f);">World Heritage</button>
       </div>
 
       <!-- UI Layer -->
@@ -63,25 +63,17 @@
             <div class="upgrade-list">
               <div class="upgrade-item">
                 <div class="upgrade-info">
-                  <h3>Brush Size</h3>
-                  <p class="level-text">Lvl <span id="brush-lvl">1</span></p>
+                  <h3>💣 Bomb</h3>
+                  <p style="font-size: 0.8em; color: #ccc;">Instantly clear random areas</p>
                 </div>
-                <button id="upgrade-brush-btn" class="upgrade-btn">Cost: <span id="brush-cost">100</span> 🪙</button>
+                <button id="buy-bomb" class="upgrade-btn">Cost: 500 🪙</button>
               </div>
               <div class="upgrade-item">
                 <div class="upgrade-info">
-                  <h3>Coin Multiplier</h3>
-                  <p class="level-text">Lvl <span id="mult-lvl">1</span></p>
+                  <h3>🚗 Wiper</h3>
+                  <p style="font-size: 0.8em; color: #ccc;">Sweep a large horizontal path</p>
                 </div>
-                <button id="upgrade-mult-btn" class="upgrade-btn">Cost: <span id="mult-cost">250</span> 🪙</button>
-              </div>
-
-              <div class="upgrade-item">
-                <div class="upgrade-info">
-                  <h3>Lucky Gem</h3>
-                  <p class="level-text">Lvl <span id="luck-lvl">0</span></p>
-                </div>
-                <button id="upgrade-luck-btn" class="upgrade-btn">Cost: <span id="luck-cost">1000</span> 🪙</button>
+                <button id="buy-wiper" class="upgrade-btn">Cost: 1500 🪙</button>
               </div>
             </div>
             
